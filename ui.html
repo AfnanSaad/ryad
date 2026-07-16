@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<style>
+  body {
+    font-family: -apple-system, "Segoe UI", Tahoma, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: #1e1e1e;
+    color: #eee;
+  }
+  h2 { font-size: 14px; margin: 0 0 12px; }
+  label { display: block; font-size: 11px; margin: 10px 0 4px; color: #aaa; }
+  input, select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    background: #2c2c2c;
+    border: 1px solid #444;
+    color: #eee;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  button {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px;
+    background: #8e7cc3;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #status { margin-top: 10px; font-size: 11px; color: #f39c12; min-height: 14px; }
+  #apiUrl { font-size: 10px; color: #666; margin-top: 14px; }
+</style>
+</head>
+<body>
+  <h2>محاكاة "ماذا لو؟" — رياد</h2>
+
+  <label>وصف القرار</label>
+  <input id="decision_description" value="توظيف مهندس جديد" />
+
+  <label>نوع القرار</label>
+  <select id="decision_type">
+    <option value="Expense">مصروف</option>
+    <option value="Income">دخل</option>
+  </select>
+
+  <label>طبيعة القرار</label>
+  <select id="decision_behavior">
+    <option value="Recurring">متكرر شهريًا</option>
+    <option value="One-time">مرة واحدة</option>
+  </select>
+
+  <label>المبلغ (ريال)</label>
+  <input id="decision_amount" type="number" value="20000" />
+
+  <label>عدد أشهر التوقع</label>
+  <input id="forecast_months" type="number" value="3" min="1" max="6" />
+
+  <label>الحد الآمن للرصيد (ريال)</label>
+  <input id="safe_minimum_balance" type="number" value="50000" />
+
+  <button id="runBtn">شغّل المحاكاة وارسم النتيجة</button>
+  <div id="status"></div>
+  <div id="apiUrl">API: <span id="apiUrlText"></span></div>
+
+<script>
+  // ⚠️ بعد ما تنشر السيرفر على Render، بدّل هذا الرابط برابطك الفعلي
+  const API_URL = "https://REPLACE-WITH-YOUR-RENDER-URL.onrender.com";
+  document.getElementById('apiUrlText').textContent = API_URL;
+
+  const btn = document.getElementById('runBtn');
+  const statusEl = document.getElementById('status');
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    statusEl.textContent = "جاري الاتصال بالسيرفر...";
+
+    const payload = {
+      decision_description: document.getElementById('decision_description').value,
+      decision_type: document.getElementById('decision_type').value,
+      decision_behavior: document.getElementById('decision_behavior').value,
+      decision_amount: parseFloat(document.getElementById('decision_amount').value),
+      forecast_months: parseInt(document.getElementById('forecast_months').value, 10),
+      safe_minimum_balance: parseFloat(document.getElementById('safe_minimum_balance').value),
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/simulate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errText}`);
+      }
+
+      const data = await res.json();
+      statusEl.textContent = "تم الاستلام، جاري الرسم داخل Figma...";
+
+      // نرسل النتيجة لكود الـ plugin الرئيسي (code.js) عشان يرسمها على الكانفس
+      parent.postMessage({ pluginMessage: { type: "draw-chart", data } }, "*");
+    } catch (err) {
+      statusEl.textContent = "خطأ: " + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
