@@ -1,0 +1,13 @@
+{
+  "name": "Riyad - What-If Simulator",
+  "id": "riyad-whatif-simulator",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://REPLACE-WITH-YOUR-RENDER-URL.onrender.com"
+    ]
+  }
+}
